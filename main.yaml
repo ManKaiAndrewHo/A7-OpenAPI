@@ -1,0 +1,111 @@
+openapi: 3.0.3
+info:
+  title: Movie Theater Seat Reservation API
+  version: 1.0.0
+  description: >
+    API for reserving seats in a movie theater.
+
+servers:
+  - url: https://api.movietheater.com/v1
+
+paths:
+  /reservations:
+    post:
+      summary: Reserve seats for a movie show
+      description: Holds the requested seats for 10 minutes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - showtimeId
+                - seats
+                - customerEmail
+              properties:
+                showtimeId:
+                  type: string
+                  example: "st_1234"
+                seats:
+                  type: array
+                  items:
+                    type: string
+                  example: ["A1", "A2", "A3"]
+                customerEmail:
+                  type: string
+                  example: "gator@email.com"
+      responses:
+        '201':
+          description: Seats reserved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          description: Bad request
+        '409':
+          description: One or more seats are already reserved
+  
+  /reservations/{reservationId}:
+    get:
+      summary: Get reservation by ID
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: The ID of the reservation to retrieve
+          schema:
+            type: string
+            example: "res_12345"
+      responses:
+        '200':
+          description: Reservation details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '404':
+          description: Reservation not found
+    delete:
+      summary: Cancel a reservation
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: The ID of the reservation to cancel
+          schema:
+            type: string
+            example: "res_12345"
+      responses:
+        '204':
+          description: Reservation canceled successfully
+        '404':
+          description: Reservation not found
+        '409':
+          description: Reservation cannot be canceled (e.g., showtime has already started or seats have been paid for)
+
+components:
+  schemas:
+    Reservation:
+      type: object
+      properties:
+        reservationId:
+          type: string
+          example: "res_12345"
+        showtimeId:
+          type: string
+          example: "st_1234"
+        seats:
+          type: array
+          items:
+            type: string
+          example: ["A1", "A2", "A3"]
+        status:
+          type: string
+          enum: [held, expired, paid]
+          example: "held"
+        expiredAt:
+          type: string
+          format: date-time
+          example: "2024-06-01T12:00:00Z"
